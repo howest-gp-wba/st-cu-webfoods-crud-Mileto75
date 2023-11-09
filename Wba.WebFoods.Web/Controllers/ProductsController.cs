@@ -1,5 +1,6 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Wba.WebFoods.Core.Entities;
 using Wba.WebFoods.Web.Data;
 using Wba.WebFoods.Web.ViewModels;
 
@@ -8,13 +9,16 @@ namespace Wba.WebFoods.Web.Controllers
     public class ProductsController : Controller
     {
         private readonly WebFoodsDbContext _webFoodsDbContext;
+        private readonly ILogger<ProductsController> _logger;
 
         //dependency injection
-        public ProductsController(WebFoodsDbContext webFoodsDbContext)
+        public ProductsController(WebFoodsDbContext webFoodsDbContext, ILogger<ProductsController> logger)
         {
             _webFoodsDbContext = webFoodsDbContext;
+            _logger = logger;
         }
 
+        [HttpGet]
         public IActionResult Index()
         {
             //show a product list
@@ -33,6 +37,7 @@ namespace Wba.WebFoods.Web.Controllers
             //pass to the view
             return View(productsIndexViewModel);
         }
+        [HttpGet]
         public IActionResult Info(int id)
         {
             //get the product
@@ -56,14 +61,62 @@ namespace Wba.WebFoods.Web.Controllers
                 Price = product.Price,
                 Category = new BaseViewModel
                 {
-                    Id = product.Category.Id,
-                    Value = product.Category.Name
+                    Id = product?.Category?.Id ?? 0,
+                    Value = product?.Category?.Name ?? "NoCat"
                 },
                 Properties = product.Properties.Select
                 (p => new BaseViewModel { Id = p.Id, Value = p.Name })
             };
             //pass to the view
             return View(productsInfoViewModel);
+        }
+        [HttpGet]
+        public IActionResult Create()
+        {
+            //show the form
+            return View();
+        }
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public IActionResult Create(ProductsCreateViewModel productsCreateViewModel)
+        {
+            //check the modelstate = validation
+            if(!ModelState.IsValid)
+            {
+                return View(productsCreateViewModel);
+            }
+            //create the product
+            //check if product exists in db
+            if(_webFoodsDbContext
+                .Products.Any(p => p.Name.ToUpper()
+                .Equals(productsCreateViewModel.Name.ToUpper())))
+            {
+                //add custom error
+                ModelState.AddModelError("Name","Product already in database!");
+                return View(productsCreateViewModel);
+            }
+            var product = new Product 
+            {
+                Name = productsCreateViewModel.Name,
+                Description = productsCreateViewModel.Description,
+                Price = productsCreateViewModel.Price
+            };
+            //add to the databasecontext
+            _webFoodsDbContext.Products.Add(product);
+            //save the changes
+            try 
+            {
+                _webFoodsDbContext.SaveChanges();
+                return RedirectToAction("Index");
+            }
+            catch (DbUpdateException dbUpdateException)
+            {
+                //log the error
+                _logger.LogCritical(dbUpdateException.Message);
+                //add custom error message
+                ModelState.AddModelError("", "Unkown error, try again later!");
+                return View(productsCreateViewModel);
+            }
         }
     }
 }
