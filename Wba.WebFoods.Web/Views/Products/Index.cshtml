@@ -1,0 +1,25 @@
+﻿@model ProductsIndexViewModel
+
+<div class="row">
+    <div class="col col-lg-5 mx-auto">
+        <table class="table">
+            <tr>
+                <td>Name</td>
+                <td></td>
+            </tr>
+            @foreach(var product in Model.Products)
+            {
+               <tr>
+                   <td>
+                       @product.Value
+                   </td>
+                   <td>
+                       <a asp-controller="Products"
+                          asp-action="Info"
+                          asp-route-id="@product.Id" class="btn btn-info">Info</a>
+                   </td>
+               </tr>
+            }
+        </table>
+    </div>
+</div>
