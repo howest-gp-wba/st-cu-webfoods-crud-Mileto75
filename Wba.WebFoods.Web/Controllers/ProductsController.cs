@@ -117,7 +117,9 @@ namespace Wba.WebFoods.Web.Controllers
             {
                 Name = productsCreateViewModel.Name,
                 Description = productsCreateViewModel.Description,
-                Price = productsCreateViewModel.Price
+                Price = productsCreateViewModel.Price,
+                //add the category, use the unshadowed foreign key
+                CategoryId = productsCreateViewModel.CategoryId,
             };
             //add to the databasecontext
             _webFoodsDbContext.Products.Add(product);

@@ -13,6 +13,7 @@ namespace Wba.WebFoods.Web.ViewModels
         public decimal Price { get; set; }
         //category
         public IEnumerable<SelectListItem> Categories { get; set; }
+        [Display(Name = "Category")]
         public int CategoryId { get; set; }
     }
 }
