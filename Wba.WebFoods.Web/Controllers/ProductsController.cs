@@ -86,6 +86,15 @@ namespace Wba.WebFoods.Web.Controllers
                     Value = c.Id.ToString(),Text = c.Name
                 })
             };
+            //fill the properties list
+            var properties = _webFoodsDbContext
+                .Properties.ToList();
+            productsCreateViewModel.Properties
+                = properties.Select(p => new SelectListItem 
+                {
+                    Value = p.Id.ToString(),
+                    Text = p.Name   
+                });
             return View(productsCreateViewModel);
         }
         [HttpPost]
@@ -98,6 +107,15 @@ namespace Wba.WebFoods.Web.Controllers
                 Value = c.Id.ToString(),
                 Text = c.Name
             });
+            //fill the properties
+            var properties = _webFoodsDbContext
+                .Properties.ToList();
+            productsCreateViewModel.Properties
+                = properties.Select(p => new SelectListItem
+                {
+                    Value = p.Id.ToString(),
+                    Text = p.Name
+                });
             //check the modelstate = validation
             if (!ModelState.IsValid)
             {
@@ -113,6 +131,11 @@ namespace Wba.WebFoods.Web.Controllers
                 ModelState.AddModelError("Name","Product already in database!");
                 return View(productsCreateViewModel);
             }
+            //get the selected properties
+            var selectedProperties = _webFoodsDbContext
+                .Properties
+                .Where(p => productsCreateViewModel.PropertyIds.Contains(p.Id))
+                .ToList();
             var product = new Product 
             {
                 Name = productsCreateViewModel.Name,
@@ -120,6 +143,7 @@ namespace Wba.WebFoods.Web.Controllers
                 Price = productsCreateViewModel.Price,
                 //add the category, use the unshadowed foreign key
                 CategoryId = productsCreateViewModel.CategoryId,
+                Properties = selectedProperties,
             };
             //add to the databasecontext
             _webFoodsDbContext.Products.Add(product);
