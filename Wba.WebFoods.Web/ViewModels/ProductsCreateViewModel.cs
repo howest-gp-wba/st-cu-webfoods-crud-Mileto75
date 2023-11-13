@@ -1,4 +1,5 @@
-﻿using System.ComponentModel.DataAnnotations;
+﻿using Microsoft.AspNetCore.Mvc.Rendering;
+using System.ComponentModel.DataAnnotations;
 
 namespace Wba.WebFoods.Web.ViewModels
 {
@@ -10,5 +11,8 @@ namespace Wba.WebFoods.Web.ViewModels
         [Required]
         [Range(0.01,100,ErrorMessage = "Please provide a positive value")]
         public decimal Price { get; set; }
+        //category
+        public IEnumerable<SelectListItem> Categories { get; set; }
+        public int CategoryId { get; set; }
     }
 }

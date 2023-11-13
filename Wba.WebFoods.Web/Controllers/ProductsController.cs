@@ -1,4 +1,5 @@
 ﻿using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
 using Wba.WebFoods.Core.Entities;
 using Wba.WebFoods.Web.Data;
@@ -74,14 +75,31 @@ namespace Wba.WebFoods.Web.Controllers
         public IActionResult Create()
         {
             //show the form
-            return View();
+            //fill the categories list
+            //get the categories
+            var categories = _webFoodsDbContext
+                .Categories.ToList();
+            var productsCreateViewModel = new ProductsCreateViewModel
+            {
+                Categories = categories.Select(c => new SelectListItem
+                {
+                    Value = c.Id.ToString(),Text = c.Name
+                })
+            };
+            return View(productsCreateViewModel);
         }
         [HttpPost]
         [ValidateAntiForgeryToken]
         public IActionResult Create(ProductsCreateViewModel productsCreateViewModel)
         {
+            var categories = _webFoodsDbContext .Categories.ToList();
+            productsCreateViewModel.Categories = categories.Select(c => new SelectListItem
+            {
+                Value = c.Id.ToString(),
+                Text = c.Name
+            });
             //check the modelstate = validation
-            if(!ModelState.IsValid)
+            if (!ModelState.IsValid)
             {
                 return View(productsCreateViewModel);
             }
