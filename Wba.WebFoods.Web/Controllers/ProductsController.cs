@@ -1,6 +1,7 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
+using System.Drawing;
 using Wba.WebFoods.Core.Entities;
 using Wba.WebFoods.Web.Data;
 using Wba.WebFoods.Web.ViewModels;
@@ -56,12 +57,19 @@ namespace Wba.WebFoods.Web.Controllers
                 return View("NotFound");
             }
             //fill the model
+            //check if image == null
+            var imageUrl = "https://placehold.co/600x400";
+            if (product.Image != null)
+            {
+                imageUrl = $"/images/{product.Image}";
+            }
             var productsInfoViewModel = new ProductsInfoViewModel
             {
                 Id = product.Id,
                 Value = product.Name,
                 Description = product.Description,
                 Price = product.Price,
+                Image = imageUrl, 
                 Category = new BaseViewModel
                 {
                     Id = product?.Category?.Id ?? 0,
