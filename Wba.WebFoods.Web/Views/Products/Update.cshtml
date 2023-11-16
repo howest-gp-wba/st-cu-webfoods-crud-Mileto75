@@ -1,0 +1,13 @@
+﻿@model ProductsUpdateViewModel
+<div class="row">
+    <div class="col col-lg-5 mx-auto border border-1 rounded rounded-3">
+        <div class="text-danger" asp-validation-summary="ModelOnly"></div>
+        <form asp-controller="Products" asp-action="Update" method="post" enctype="multipart/form-data">
+            @* call partial *@
+            <partial name="_ProductFormPartial" model="@Model" />
+            <input asp-for="Id" />
+            <button type="submit" class="btn btn-primary mb-2 mt-2">Update</button>
+            <a asp-controller="Products" asp-action="Index" class="btn btn-danger mb-2 mt-2">Cancel</a>
+        </form>
+    </div>
+</div>

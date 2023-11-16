@@ -69,7 +69,7 @@ namespace Wba.WebFoods.Web.Controllers
                 Id = product.Id,
                 Value = product.Name,
                 Description = product.Description,
-                Price = product.Price,
+                Price = Math.Round(product.Price,2),
                 Image = imageUrl, 
                 Category = new BaseViewModel
                 {
@@ -242,7 +242,7 @@ namespace Wba.WebFoods.Web.Controllers
                 .FirstOrDefault(p => p.Id == id);
             //get the image for deletion
             var image = product.Image;
-            //delete from context
+            //delete product from dbcontext
             _webFoodsDbContext
                 .Products.Remove(product);
             //save the changes
@@ -274,6 +274,89 @@ namespace Wba.WebFoods.Web.Controllers
             }
             //product deleted
             return RedirectToAction(nameof(Index));
+        }
+        [HttpGet]
+        public IActionResult Update(int id)
+        {
+            //show the product form
+            var product = _webFoodsDbContext
+                .Products
+                .Include(p => p.Category)
+                .Include(p => p.Properties)
+                .FirstOrDefault(p => p.Id == id);
+            //check if null
+            if(product == null)
+            {
+                Response.StatusCode = 404;
+                return View("NotFound");
+            }
+            //fill the categories list
+            //get the categories
+            var categories = _webFoodsDbContext
+                .Categories.ToList();
+            var productsUpdateViewModel = new ProductsUpdateViewModel
+            {
+                Categories = categories.Select(c => new SelectListItem
+                {
+                    Value = c.Id.ToString(),
+                    Text = c.Name
+                })
+            };
+            //fill the properties list
+            var properties = _webFoodsDbContext
+                .Properties.ToList();
+            productsUpdateViewModel.Properties
+                = properties.Select(p => new SelectListItem
+                {
+                    Value = p.Id.ToString(),
+                    Text = p.Name
+                });
+            //fill the model
+            productsUpdateViewModel.Id = product.Id;
+            productsUpdateViewModel.Name = product.Name;
+            productsUpdateViewModel.Description = product.Description;
+            productsUpdateViewModel.CategoryId = (int)product.CategoryId;
+            productsUpdateViewModel.Price = product.Price;
+            productsUpdateViewModel.PropertyIds = product
+                .Properties.Select(pr => pr.Id);
+            return View(productsUpdateViewModel);
+        }
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public IActionResult Update(ProductsUpdateViewModel productsUpdateViewModel)
+        {
+            //get the product
+            var product = _webFoodsDbContext
+                .Products
+                .Include(p => p.Category)
+                .Include(p => p.Properties)
+                .FirstOrDefault(p => p.Id == productsUpdateViewModel.Id);
+            //check if null
+            if (product == null)
+            {
+                Response.StatusCode = 404;
+                return View("NotFound");
+            }
+            //update the properties
+            product.Name = productsUpdateViewModel.Name;
+            product.Description = productsUpdateViewModel.Description;
+            product.CategoryId = productsUpdateViewModel.CategoryId;
+            product.Price = productsUpdateViewModel.Price;
+            product.Properties = _webFoodsDbContext
+                .Properties
+                .Where(pr => productsUpdateViewModel.PropertyIds.Contains(pr.Id))
+                .ToList();
+            //save the changes
+            try
+            {
+                _webFoodsDbContext.SaveChanges();
+            }
+            catch (DbUpdateException dbUpdateException)
+            {
+                _logger.LogError(dbUpdateException.Message);
+                return RedirectToAction(nameof(Index));
+            }
+            return RedirectToAction(nameof(Info),new { id = product.Id });
         }
     }
 }

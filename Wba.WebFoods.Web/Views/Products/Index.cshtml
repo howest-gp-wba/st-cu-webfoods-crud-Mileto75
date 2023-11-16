@@ -21,6 +21,9 @@
                           asp-action="Info"
                           asp-route-id="@product.Id" class="btn btn-outline-info">Info</a>
                        <a asp-controller="Products"
+                          asp-action="Update"
+                          asp-route-id="@product.Id" class="btn btn-outline-secondary">Update</a>
+                       <a asp-controller="Products"
                           asp-action="ConfirmDelete"
                           asp-route-id="@product.Id" class="btn btn-outline-danger">Delete</a>
                    </td>
