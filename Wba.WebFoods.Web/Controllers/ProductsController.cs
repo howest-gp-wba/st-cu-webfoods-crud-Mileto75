@@ -102,6 +102,7 @@ namespace Wba.WebFoods.Web.Controllers
         public IActionResult Create(ProductsCreateViewModel productsCreateViewModel)
         {
             var categories = _webFoodsDbContext .Categories.ToList();
+            
             productsCreateViewModel.Categories = categories.Select(c => new SelectListItem
             {
                 Value = c.Id.ToString(),

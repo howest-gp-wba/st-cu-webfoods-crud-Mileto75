@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Mvc.Rendering;
+﻿using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Mvc.Rendering;
 using System.ComponentModel.DataAnnotations;
 
 namespace Wba.WebFoods.Web.ViewModels
@@ -19,5 +20,8 @@ namespace Wba.WebFoods.Web.ViewModels
         public IEnumerable<SelectListItem> Properties { get; set; }
         [Required(ErrorMessage = "Please select at least one property!")]
         public IEnumerable<int> PropertyIds { get; set; }
+        [Display(Name = "Image")]
+        
+        public IFormFile Image { get; set; }
     }
 }
