@@ -19,7 +19,10 @@
                    <td>
                        <a asp-controller="Products"
                           asp-action="Info"
-                          asp-route-id="@product.Id" class="btn btn-info">Info</a>
+                          asp-route-id="@product.Id" class="btn btn-outline-info">Info</a>
+                       <a asp-controller="Products"
+                          asp-action="ConfirmDelete"
+                          asp-route-id="@product.Id" class="btn btn-outline-danger">Delete</a>
                    </td>
                </tr>
             }

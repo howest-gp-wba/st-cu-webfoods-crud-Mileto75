@@ -232,5 +232,48 @@ namespace Wba.WebFoods.Web.Controllers
                 };
             return View(productsDeleteViewModel);
         }
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public IActionResult Delete(int id) 
+        {
+            //get the product
+            var product = _webFoodsDbContext
+                .Products
+                .FirstOrDefault(p => p.Id == id);
+            //get the image for deletion
+            var image = product.Image;
+            //delete from context
+            _webFoodsDbContext
+                .Products.Remove(product);
+            //save the changes
+            try
+            {
+                _webFoodsDbContext.SaveChanges();
+            }
+            catch (DbUpdateException dbUpdateException)
+            {
+                _logger.LogError(dbUpdateException.Message);
+                return RedirectToAction(nameof(Index));
+            }
+            //check if image != null => delete
+            if (image != null)
+            {
+                //rebuild image path
+                var imagePath = Path
+                    .Combine(_webHostEnvironment.WebRootPath,"images",image);
+                //delete the image
+                try
+                {
+                    System.IO.File.Delete(imagePath);
+                }
+                catch(FileNotFoundException fileNotFoundException)
+                {
+                    _logger.LogError(fileNotFoundException.Message);
+                    return RedirectToAction(nameof(Index));
+                }
+            }
+            //product deleted
+            return RedirectToAction(nameof(Index));
+        }
     }
 }
