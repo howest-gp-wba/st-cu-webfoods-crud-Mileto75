@@ -11,12 +11,14 @@ namespace Wba.WebFoods.Web.Controllers
     {
         private readonly WebFoodsDbContext _webFoodsDbContext;
         private readonly ILogger<ProductsController> _logger;
+        private readonly IWebHostEnvironment _webHostEnvironment;
 
         //dependency injection
-        public ProductsController(WebFoodsDbContext webFoodsDbContext, ILogger<ProductsController> logger)
+        public ProductsController(WebFoodsDbContext webFoodsDbContext, ILogger<ProductsController> logger, IWebHostEnvironment webHostEnvironment)
         {
             _webFoodsDbContext = webFoodsDbContext;
             _logger = logger;
+            _webHostEnvironment = webHostEnvironment;
         }
 
         [HttpGet]
@@ -118,6 +120,11 @@ namespace Wba.WebFoods.Web.Controllers
                     Text = p.Name
                 });
             //check the modelstate = validation
+            //check the file extension
+            if(!productsCreateViewModel.Image.ContentType.Contains("image/"))
+            {
+                ModelState.AddModelError("image", "Only images allowed");
+            }
             if (!ModelState.IsValid)
             {
                 return View(productsCreateViewModel);
@@ -146,6 +153,39 @@ namespace Wba.WebFoods.Web.Controllers
                 CategoryId = productsCreateViewModel.CategoryId,
                 Properties = selectedProperties,
             };
+            //null check on image
+            if(productsCreateViewModel.Image != null)
+            {
+                //(limit file extensions) data annotations 
+                //create a unique filename
+                var filename = $"{Guid.NewGuid()}_{productsCreateViewModel.Image.FileName}";
+                //create the folderpath
+                var pathToFolder = Path.Combine(_webHostEnvironment.WebRootPath,"images");
+                //test if path exists
+                if(!Directory.Exists(pathToFolder))
+                {
+                    Directory.CreateDirectory(pathToFolder);
+                }
+                //create the full path
+                var pathToFile = Path.Combine(pathToFolder,filename);
+                //copy the uploaded file to new path
+                using(var fileStream = new FileStream(pathToFile,FileMode.Create))
+                {
+                    //copy the file from the formfile to the path
+                    try
+                    {
+                        productsCreateViewModel.Image
+                        .CopyTo(fileStream);
+                    }
+                    catch (FileNotFoundException exception)
+                    {
+                        _logger.LogCritical(exception.Message);
+                        //return View with custom error
+                    }
+                }
+                //put the filename in database
+                product.Image = filename;
+            }
             //add to the databasecontext
             _webFoodsDbContext.Products.Add(product);
             //save the changes

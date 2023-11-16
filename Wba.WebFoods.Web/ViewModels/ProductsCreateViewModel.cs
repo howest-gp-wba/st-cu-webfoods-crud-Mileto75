@@ -21,7 +21,6 @@ namespace Wba.WebFoods.Web.ViewModels
         [Required(ErrorMessage = "Please select at least one property!")]
         public IEnumerable<int> PropertyIds { get; set; }
         [Display(Name = "Image")]
-        
         public IFormFile Image { get; set; }
     }
 }
