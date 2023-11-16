@@ -1,0 +1,13 @@
+﻿@model ProductsDeleteViewModel
+
+<form asp-controller="Products" asp-action="Delete" method="post">
+    
+    <div class="alert alert-danger">
+        Really delete @Model.Value
+    </div>
+    <input type="hidden" asp-for="Id" />
+    <button type="submit" class="btn btn-danger">Yes</button>
+    <a asp-controller="Products" asp-action="Index" class="btn btn-primary">No</a>
+</form>
+
+

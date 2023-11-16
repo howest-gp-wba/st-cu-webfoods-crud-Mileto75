@@ -2,6 +2,7 @@
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
 using System.Drawing;
+using System.Security.Cryptography.X509Certificates;
 using Wba.WebFoods.Core.Entities;
 using Wba.WebFoods.Web.Data;
 using Wba.WebFoods.Web.ViewModels;
@@ -210,6 +211,26 @@ namespace Wba.WebFoods.Web.Controllers
                 ModelState.AddModelError("", "Unkown error, try again later!");
                 return View(productsCreateViewModel);
             }
+        }
+        public IActionResult ConfirmDelete(int id)
+        {
+            //get the product from the database
+            var product = _webFoodsDbContext
+                .Products
+                .FirstOrDefault(p => p.Id == id);
+            //check if null
+            if(product == null)
+            {
+                Response.StatusCode = 404;
+                return View("NotFound");
+            }
+            var productsDeleteViewModel
+                = new ProductsDeleteViewModel
+                {
+                    Id = product.Id,
+                    Value = product.Name,
+                };
+            return View(productsDeleteViewModel);
         }
     }
 }
