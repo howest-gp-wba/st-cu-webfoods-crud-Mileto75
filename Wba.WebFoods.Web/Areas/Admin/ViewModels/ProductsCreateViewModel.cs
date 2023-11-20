@@ -18,7 +18,7 @@ namespace Wba.WebFoods.Web.Areas.Admin.ViewModels
         public int CategoryId { get; set; }
         //properties many to many
         public IEnumerable<SelectListItem> Properties { get; set; }
-        [Required(ErrorMessage = "Please select at least one property!")]
+       // [Required(ErrorMessage = "Please select at least one property!")]
         public IEnumerable<int> PropertyIds { get; set; }
         [Display(Name = "Image")]
         public IFormFile Image { get; set; }
