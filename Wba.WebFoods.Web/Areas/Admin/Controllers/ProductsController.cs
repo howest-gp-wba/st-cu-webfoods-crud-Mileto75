@@ -5,6 +5,8 @@ using Microsoft.EntityFrameworkCore.Infrastructure;
 using Wba.WebFoods.Core.Entities;
 using Wba.WebFoods.Web.Areas.Admin.ViewModels;
 using Wba.WebFoods.Web.Data;
+using Wba.WebFoods.Web.Services;
+using Wba.WebFoods.Web.Services.Interfaces;
 
 namespace Wba.WebFoods.Web.Areas.Admin.Controllers
 {
@@ -14,13 +16,17 @@ namespace Wba.WebFoods.Web.Areas.Admin.Controllers
         private readonly WebFoodsDbContext _webFoodsDbContext;
         private readonly ILogger<ProductsController> _logger;
         private readonly IWebHostEnvironment _webHostEnvironment;
+        private readonly IFormBuilderService _formBuilderService;
+        private readonly IFileService _fileService; 
 
         //dependency injection
-        public ProductsController(WebFoodsDbContext webFoodsDbContext, ILogger<ProductsController> logger, IWebHostEnvironment webHostEnvironment)
+        public ProductsController(WebFoodsDbContext webFoodsDbContext, ILogger<ProductsController> logger, IWebHostEnvironment webHostEnvironment, IFormBuilderService formBuilderService, IFileService fileService)
         {
             _webFoodsDbContext = webFoodsDbContext;
             _logger = logger;
             _webHostEnvironment = webHostEnvironment;
+            _formBuilderService = formBuilderService;
+            _fileService = fileService;
         }
         [HttpGet]
         public IActionResult Index()
@@ -87,25 +93,15 @@ namespace Wba.WebFoods.Web.Areas.Admin.Controllers
             //show the form
             //fill the categories list
             //get the categories
-            var categories = _webFoodsDbContext
-                .Categories.ToList();
             var productsCreateViewModel = new ProductsCreateViewModel
             {
-                Categories = categories.Select(c => new SelectListItem
-                {
-                    Value = c.Id.ToString(),
-                    Text = c.Name
-                })
+                Categories = _formBuilderService.GetCategoryList(),
             };
             //fill the properties list
             var properties = _webFoodsDbContext
                 .Properties.ToList();
             productsCreateViewModel.Properties
-                = properties.Select(p => new SelectListItem
-                {
-                    Value = p.Id.ToString(),
-                    Text = p.Name
-                });
+                = _formBuilderService.GetPropertiesList();
             return View(productsCreateViewModel);
         }
         [HttpPost]
@@ -114,26 +110,14 @@ namespace Wba.WebFoods.Web.Areas.Admin.Controllers
         {
             var categories = _webFoodsDbContext.Categories.ToList();
 
-            productsCreateViewModel.Categories = categories.Select(c => new SelectListItem
-            {
-                Value = c.Id.ToString(),
-                Text = c.Name
-            });
+            productsCreateViewModel.Categories =
+                _formBuilderService.GetCategoryList();
             //fill the properties
             var properties = _webFoodsDbContext
                 .Properties.ToList();
             productsCreateViewModel.Properties
-                = properties.Select(p => new SelectListItem
-                {
-                    Value = p.Id.ToString(),
-                    Text = p.Name
-                });
+                = _formBuilderService.GetPropertiesList();
             //check the modelstate = validation
-            //check the file extension
-            if (!productsCreateViewModel.Image.ContentType.Contains("image/"))
-            {
-                ModelState.AddModelError("image", "Only images allowed");
-            }
             if (!ModelState.IsValid)
             {
                 return View(productsCreateViewModel);
@@ -165,34 +149,14 @@ namespace Wba.WebFoods.Web.Areas.Admin.Controllers
             //null check on image
             if (productsCreateViewModel.Image != null)
             {
-                //(limit file extensions) data annotations 
-                //create a unique filename
-                var filename = $"{Guid.NewGuid()}_{productsCreateViewModel.Image.FileName}";
-                //create the folderpath
-                var pathToFolder = Path.Combine(_webHostEnvironment.WebRootPath, "images");
-                //test if path exists
-                if (!Directory.Exists(pathToFolder))
-                {
-                    Directory.CreateDirectory(pathToFolder);
-                }
-                //create the full path
-                var pathToFile = Path.Combine(pathToFolder, filename);
-                //copy the uploaded file to new path
-                using (var fileStream = new FileStream(pathToFile, FileMode.Create))
-                {
-                    //copy the file from the formfile to the path
-                    try
-                    {
-                        productsCreateViewModel.Image
-                        .CopyTo(fileStream);
-                    }
-                    catch (FileNotFoundException exception)
-                    {
-                        _logger.LogCritical(exception.Message);
-                        //return View with custom error
-                    }
-                }
                 //put the filename in database
+                var filename = _fileService.StoreFile(productsCreateViewModel.Image);
+                //check if error
+                if(filename.Equals("Error"))
+                {
+                    ModelState.AddModelError("", "File not saved.Try again later!");
+                    return View(productsCreateViewModel);
+                }
                 product.Image = filename;
             }
             //add to the databasecontext
@@ -258,19 +222,8 @@ namespace Wba.WebFoods.Web.Areas.Admin.Controllers
             //check if image != null => delete
             if (image != null)
             {
-                //rebuild image path
-                var imagePath = Path
-                    .Combine(_webHostEnvironment.WebRootPath, "images", image);
-                //delete the image
-                try
-                {
-                    System.IO.File.Delete(imagePath);
-                }
-                catch (FileNotFoundException fileNotFoundException)
-                {
-                    _logger.LogError(fileNotFoundException.Message);
-                    return RedirectToAction(nameof(Index));
-                }
+                //delete file use service class methode
+                _fileService.DeleteFile(product.Image);
             }
             //product deleted
             return RedirectToAction(nameof(Index));
@@ -292,25 +245,13 @@ namespace Wba.WebFoods.Web.Areas.Admin.Controllers
             }
             //fill the categories list
             //get the categories
-            var categories = _webFoodsDbContext
-                .Categories.ToList();
             var productsUpdateViewModel = new ProductsUpdateViewModel
             {
-                Categories = categories.Select(c => new SelectListItem
-                {
-                    Value = c.Id.ToString(),
-                    Text = c.Name
-                })
+                Categories = _formBuilderService.GetCategoryList(),
             };
             //fill the properties list
-            var properties = _webFoodsDbContext
-                .Properties.ToList();
             productsUpdateViewModel.Properties
-                = properties.Select(p => new SelectListItem
-                {
-                    Value = p.Id.ToString(),
-                    Text = p.Name
-                });
+                = _formBuilderService.GetPropertiesList();
             //fill the model
             productsUpdateViewModel.Id = product.Id;
             productsUpdateViewModel.Name = product.Name;
@@ -325,6 +266,14 @@ namespace Wba.WebFoods.Web.Areas.Admin.Controllers
         [ValidateAntiForgeryToken]
         public IActionResult Update(ProductsUpdateViewModel productsUpdateViewModel)
         {
+            if(!ModelState.IsValid)
+            {
+                productsUpdateViewModel.Categories = _formBuilderService
+                    .GetCategoryList();
+                productsUpdateViewModel.Properties
+                    = _formBuilderService.GetPropertiesList(); 
+                return View(productsUpdateViewModel);
+            }
             //get the product
             var product = _webFoodsDbContext
                 .Products
@@ -346,6 +295,20 @@ namespace Wba.WebFoods.Web.Areas.Admin.Controllers
                 .Properties
                 .Where(pr => productsUpdateViewModel.PropertyIds.Contains(pr.Id))
                 .ToList();
+            //check for image
+            if(productsUpdateViewModel.Image != null)
+            {
+                //delete old image
+                _fileService.DeleteFile(product.Image);
+                //store new image
+                var filename = _fileService.StoreFile(productsUpdateViewModel.Image);
+                if(filename.Equals("Error"))
+                {
+                    ModelState.AddModelError("image", "File not saved.Try again later!");
+                    return View(productsUpdateViewModel);
+                }
+                product.Image = filename;
+            }
             //save the changes
             try
             {
@@ -366,12 +329,7 @@ namespace Wba.WebFoods.Web.Areas.Admin.Controllers
             var productsBulkUpdateViewModel =
                 new ProductsBulkUpdateViewModel
                 {
-                    Products = _webFoodsDbContext
-                    .Products.Select(p => new CheckboxModel
-                    {
-                        Value = p.Id,
-                        Text = p.Name
-                    }).ToList()
+                    Products = _formBuilderService.GetProductCheckBoxesList(),
                 };
             return View(productsBulkUpdateViewModel);
         }
@@ -397,13 +355,7 @@ namespace Wba.WebFoods.Web.Areas.Admin.Controllers
                             Name = p.Name,
                             Price = p.Price,
                             CategoryId = (int)p.CategoryId,
-                            Categories = _webFoodsDbContext
-                            .Categories.Select
-                            (c => new SelectListItem 
-                            {
-                                Text = c.Name,
-                                Value = c.Id.ToString(),
-                            }),
+                            Categories = _formBuilderService.GetCategoryList(),
                         }).ToList(),
                 };
             //show the form to edit
@@ -420,13 +372,7 @@ namespace Wba.WebFoods.Web.Areas.Admin.Controllers
                 foreach(var product in
                     productsProcessBulkUpdateViewModel.Products)
                 {
-                    product.Categories = _webFoodsDbContext
-                            .Categories.Select
-                            (c => new SelectListItem
-                            {
-                                Text = c.Name,
-                                Value = c.Id.ToString(),
-                            });
+                    product.Categories = _formBuilderService.GetCategoryList();
                 }
                 return View("ProcessBulkUpdate",productsProcessBulkUpdateViewModel);
             }
@@ -457,6 +403,5 @@ namespace Wba.WebFoods.Web.Areas.Admin.Controllers
             }
             return RedirectToAction(nameof(Index));
         }
-
     }
 }

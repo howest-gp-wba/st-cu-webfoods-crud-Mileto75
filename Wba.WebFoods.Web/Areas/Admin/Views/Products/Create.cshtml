@@ -5,11 +5,6 @@
         <form asp-controller="Products" asp-action="Create" method="post" enctype="multipart/form-data">
             @* call partial *@
             <partial name="_ProductFormPartial" model="@Model" />
-            <div class="form-group">
-                <label asp-for="Image"></label>
-                <input asp-for="Image" class="form-control">
-                <span class="text-danger" asp-validation-for="Image"></span>
-            </div>
             <button type="submit" class="btn btn-primary mb-2 mt-2">Create</button>
         </form>
     </div>

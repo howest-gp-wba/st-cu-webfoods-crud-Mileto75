@@ -1,5 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using Wba.WebFoods.Web.Data;
+using Wba.WebFoods.Web.Services;
+using Wba.WebFoods.Web.Services.Interfaces;
 
 namespace Wba.WebFoods.Web
 {
@@ -15,6 +17,9 @@ namespace Wba.WebFoods.Web
                 options => 
                 options.UseSqlServer(builder.Configuration.GetConnectionString("WebFoodsDb"))
                 );
+            //add own services
+            builder.Services.AddTransient<IFormBuilderService,FormBuilderService>();
+            builder.Services.AddTransient<IFileService,FileService>();
             builder.Services.AddControllersWithViews();
 
             var app = builder.Build();
