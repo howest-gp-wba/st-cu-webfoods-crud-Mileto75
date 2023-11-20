@@ -1,0 +1,24 @@
+﻿@model ProductsProcessBulkUpdateViewModel
+<div class="row">
+    <div class="col col-lg-4 mx-auto">
+        <form asp-area="Admin" asp-controller="Products" asp-action="SaveBulkUpdate" method="post">
+            @* loop over products and show edit fields *@
+            @for (int i = 0; i < Model.Products.Count(); i++)
+            {
+                    <input asp-for="@Model.Products[i].Id" class="form-control">
+                    <label asp-for="@Model.Products[i].Name"></label>
+                    <input asp-for="@Model.Products[i].Name" class="form-control">
+                    <span class="text-danger" asp-validation-for="@Model.Products[i].Name"></span>
+                    <label asp-for="@Model.Products[i].Price"></label>
+                    <input asp-for="@Model.Products[i].Price" class="form-control">
+                    <span class="text-danger" asp-validation-for="@Model.Products[i].Price"></span>
+                    <label asp-for="@Model.Products[i].CategoryId"></label>
+                    <select asp-for="@Model.Products[i].CategoryId" asp-items="@Model.Products[i].Categories" class="form-control"></select>
+                    <span class="text-danger" asp-validation-for="@Model.Products[i].Name"></span>
+                
+            }
+            <button type="submit" class="btn btn-primary">Save</button>
+        </form>
+    </div>
+</div>
+

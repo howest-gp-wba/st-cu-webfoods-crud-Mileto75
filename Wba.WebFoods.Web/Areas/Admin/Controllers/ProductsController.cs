@@ -1,6 +1,7 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Infrastructure;
 using Wba.WebFoods.Core.Entities;
 using Wba.WebFoods.Web.Areas.Admin.ViewModels;
 using Wba.WebFoods.Web.Data;
@@ -356,6 +357,105 @@ namespace Wba.WebFoods.Web.Areas.Admin.Controllers
                 return RedirectToAction(nameof(Index));
             }
             return RedirectToAction(nameof(Info), new { id = product.Id });
+        }
+        [HttpGet]
+        public IActionResult BulkUpdate()
+        {
+            //show a list of foods with checkboxes
+            //get the foods and put in the model
+            var productsBulkUpdateViewModel =
+                new ProductsBulkUpdateViewModel
+                {
+                    Products = _webFoodsDbContext
+                    .Products.Select(p => new CheckboxModel
+                    {
+                        Value = p.Id,
+                        Text = p.Name
+                    }).ToList()
+                };
+            return View(productsBulkUpdateViewModel);
+        }
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public IActionResult ProcessBulkUpdate(ProductsBulkUpdateViewModel 
+            productsBulkUpdateViewModel)
+        {
+            //get the products based on selected checkbox
+            var selectedProductIds = productsBulkUpdateViewModel
+                .Products.Where(p => p.IsSelected == true)
+                .Select(p => p.Value);
+            var productsToUpdate = _webFoodsDbContext
+                .Products.Where(p => selectedProductIds.Contains(p.Id)).ToList();
+            //fill the model
+            var productsProcessBulkUpdateViewModel =
+                new ProductsProcessBulkUpdateViewModel 
+                {
+                    Products = productsToUpdate
+                        .Select(p => new ProductsUpdateViewModel 
+                        {
+                            Id = p.Id,
+                            Name = p.Name,
+                            Price = p.Price,
+                            CategoryId = (int)p.CategoryId,
+                            Categories = _webFoodsDbContext
+                            .Categories.Select
+                            (c => new SelectListItem 
+                            {
+                                Text = c.Name,
+                                Value = c.Id.ToString(),
+                            }),
+                        }).ToList(),
+                };
+            //show the form to edit
+            return View(productsProcessBulkUpdateViewModel);
+        }
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public IActionResult SaveBulkUpdate(ProductsProcessBulkUpdateViewModel
+            productsProcessBulkUpdateViewModel)
+        {
+            //check the modelstate
+            if(!ModelState.IsValid)
+            {
+                foreach(var product in
+                    productsProcessBulkUpdateViewModel.Products)
+                {
+                    product.Categories = _webFoodsDbContext
+                            .Categories.Select
+                            (c => new SelectListItem
+                            {
+                                Text = c.Name,
+                                Value = c.Id.ToString(),
+                            });
+                }
+                return View("ProcessBulkUpdate",productsProcessBulkUpdateViewModel);
+            }
+            //get the products
+            var selectedProductIds = productsProcessBulkUpdateViewModel
+                .Products.Select(p => p.Id);
+            var productsToUpdate
+                = _webFoodsDbContext
+                .Products.Where(p => selectedProductIds.Contains(p.Id)).ToList();
+            //loop over products and save the changes
+            foreach(var product in productsToUpdate)
+            { 
+                var selectedProduct = 
+                    productsProcessBulkUpdateViewModel.Products.FirstOrDefault(p => p.Id == product.Id);
+                product.Name = selectedProduct.Name;
+                product.Price = selectedProduct.Price;
+                product.CategoryId = selectedProduct.CategoryId;
+            }
+            try
+            {
+                _webFoodsDbContext.SaveChanges();
+            }
+            catch (DbUpdateException dbUpdateException)
+            {
+                _logger.LogCritical(dbUpdateException.Message);
+                ModelState.AddModelError("",dbUpdateException.Message);
+                return View("ProcessBulkUpdate", productsProcessBulkUpdateViewModel);
+            }
+            return RedirectToAction(nameof(Index));
         }
 
     }

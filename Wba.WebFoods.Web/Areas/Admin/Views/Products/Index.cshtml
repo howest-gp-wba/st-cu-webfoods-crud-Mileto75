@@ -2,32 +2,37 @@
 
 <div class="row">
     <div class="col col-lg-5 mx-auto">
-        <a asp-controller="Products"
+        <a asp-area="Admin"
+           asp-controller="Products"
            asp-action="Create"
            class="btn btn-outline-info">Create</a>
+        <a asp-area="Admin"
+           asp-controller="Products"
+           asp-action="BulkUpdate"
+           class="btn btn-outline-info">Bulk update</a>
         <table class="table">
             <tr>
                 <td>Name</td>
                 <td></td>
             </tr>
-            @foreach(var product in Model.Products)
+            @foreach (var product in Model.Products)
             {
-               <tr>
-                   <td>
-                       @product.Value
-                   </td>
-                   <td>
-                       <a asp-controller="Products"
-                          asp-action="Info"
-                          asp-route-id="@product.Id" class="btn btn-outline-info">Info</a>
-                       <a asp-controller="Products"
-                          asp-action="Update"
-                          asp-route-id="@product.Id" class="btn btn-outline-secondary">Update</a>
-                       <a asp-controller="Products"
-                          asp-action="ConfirmDelete"
-                          asp-route-id="@product.Id" class="btn btn-outline-danger">Delete</a>
-                   </td>
-               </tr>
+                <tr>
+                    <td>
+                        @product.Value
+                    </td>
+                    <td>
+                        <a asp-controller="Products"
+                           asp-action="Info"
+                           asp-route-id="@product.Id" class="btn btn-outline-info">Info</a>
+                        <a asp-controller="Products"
+                           asp-action="Update"
+                           asp-route-id="@product.Id" class="btn btn-outline-secondary">Update</a>
+                        <a asp-controller="Products"
+                           asp-action="ConfirmDelete"
+                           asp-route-id="@product.Id" class="btn btn-outline-danger">Delete</a>
+                    </td>
+                </tr>
             }
         </table>
     </div>
