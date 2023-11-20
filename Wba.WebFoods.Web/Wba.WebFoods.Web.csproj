@@ -24,4 +24,8 @@
     <ProjectReference Include="..\Wba.WebFoods.Core\Wba.WebFoods.Core.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Folder Include="Areas\Admin\Data\" />
+  </ItemGroup>
+
 </Project>

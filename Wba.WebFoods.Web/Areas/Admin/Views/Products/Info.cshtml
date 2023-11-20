@@ -1,0 +1,22 @@
+﻿@model ProductsInfoViewModel
+
+<div class="row">
+    <div class="col col-lg-3 mx-auto">
+        <div class="card" style="width: 18rem;">
+            <!--tips: add .text-center,.text-right to the .card to change card text alignment-->
+            <img src="@Model.Image" class="card-img-top" alt="@Model.Image">
+            <div class="card-body">
+                <h5 class="card-title">@Model.Value</h5>
+                <h6 class="card-subtitle mb-2 text-muted">@Model.Category.Value</h6>
+                <p class="card-text">@Model.Description</p>
+                <h6 class="card-subtitle mb-2 text-muted">@Model.Price</h6>
+                @foreach (var property in Model.Properties)
+                {
+                    <p class="card-text">@property.Value</p>
+                }
+                <a asp-controller="Products"
+                   asp-action="Index" class="btn btn-primary">Back</a>
+            </div>
+        </div>
+    </div>
+</div>

@@ -34,6 +34,11 @@ namespace Wba.WebFoods.Web
 
             app.UseAuthorization();
 
+            //route mapping for area
+            app.MapControllerRoute(
+                name: "areaDefault",
+                pattern: "{area:exists}/{controller=Products}/{action=Index}/{id?}");
+            //default route
             app.MapControllerRoute(
                 name: "default",
                 pattern: "{controller=Home}/{action=Index}/{id?}");
